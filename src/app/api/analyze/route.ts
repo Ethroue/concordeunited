@@ -6,7 +6,7 @@ import { findRelatedArticles } from "@/lib/newsapi";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { url, text } = body;
+    const { url, text, apiKey } = body;
 
     if (!url && !text) {
       return NextResponse.json(
@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get article text
     let articleText: string;
     let articleTitle: string;
     let articleSource: string;
@@ -31,21 +30,17 @@ export async function POST(request: NextRequest) {
       articleSource = "User Input";
     }
 
-    // Analyze the article with Groq
-    const analysis = await analyzeArticle(articleText);
+    const analysis = await analyzeArticle(articleText, apiKey);
 
-    // Extract keywords from the detected stance and reasoning for related article search
     const keywords = [
       ...analysis.reasoningBreakdown.values.slice(0, 2),
       analysis.detectedStance.label,
-      // Extract key terms from the summary (first 3 significant words)
       ...analysis.detectedStance.summary
         .split(" ")
         .filter((word) => word.length > 4)
         .slice(0, 3),
     ].join(" ");
 
-    // Find related articles
     let relatedArticles: Array<{
       title: string;
       source: string;
@@ -57,7 +52,6 @@ export async function POST(request: NextRequest) {
 
     try {
       const related = await findRelatedArticles(keywords, url);
-      // Map to the expected shape with placeholder stance info
       relatedArticles = related.map((article) => ({
         title: article.title,
         source: article.source,
@@ -67,7 +61,6 @@ export async function POST(request: NextRequest) {
         perspective: "neutral" as const,
       }));
     } catch (relatedError) {
-      // Non-critical — continue without related articles
       console.error("Failed to fetch related articles:", relatedError);
     }
 

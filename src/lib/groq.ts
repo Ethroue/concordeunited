@@ -1,7 +1,5 @@
 import Groq from "groq-sdk";
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
 interface AnalysisResult {
   detectedStance: {
     label: string;
@@ -40,10 +38,13 @@ interface StancedArticle {
   perspective: "supporting" | "opposing" | "neutral";
 }
 
-export async function analyzeArticle(articleText: string): Promise<AnalysisResult> {
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY environment variable is not set.");
+export async function analyzeArticle(articleText: string, apiKey?: string): Promise<AnalysisResult> {
+  const key = apiKey || process.env.GROQ_API_KEY;
+  if (!key) {
+    throw new Error("No API key provided. Please enter your Groq API key or set GROQ_API_KEY in .env.local.");
   }
+
+  const client = new Groq({ apiKey: key });
 
   const prompt = `You are a nonpartisan media analysis AI. Analyze the following article text and return a JSON object with this exact structure (no markdown, no code fences, just raw JSON):
 
@@ -71,13 +72,20 @@ export async function analyzeArticle(articleText: string): Promise<AnalysisResul
   "commonGround": ["list of points that most perspectives would agree on"]
 }
 
-Provide 2-3 alternative perspectives. Be fair and balanced. Do not favor any political side.
+Provide 2-3 alternative perspectives. Follow these rules strictly:
+- Be fair and balanced. Do not favor any political side.
+- Do not use loaded or pejorative language. Describe all perspectives with equal respect and nuance.
+- When labeling stances, use neutral descriptors (e.g., "Pro-regulation" not "Big government", "Traditional values" not "Regressive").
+- Ensure alternative perspectives are presented with the same depth and charity as the detected stance.
+- Avoid framing any perspective as the "default" or "common sense" position.
+- When listing evidence omitted, apply equal scrutiny to all sides — do not disproportionately flag omissions from one ideology.
+- Confidence scores should reflect how clearly the article expresses a stance, not how "correct" the stance is.
 
 Article text:
 ${articleText.slice(0, 15000)}`;
 
   try {
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await client.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       model: "llama-3.3-70b-versatile",
       temperature: 0.3,
@@ -97,11 +105,15 @@ ${articleText.slice(0, 15000)}`;
 
 export async function analyzeTopicArticles(
   topic: string,
-  articles: TopicArticleInput[]
+  articles: TopicArticleInput[],
+  apiKey?: string
 ): Promise<StancedArticle[]> {
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY environment variable is not set.");
+  const key = apiKey || process.env.GROQ_API_KEY;
+  if (!key) {
+    throw new Error("No API key provided. Please enter your Groq API key or set GROQ_API_KEY in .env.local.");
   }
+
+  const client = new Groq({ apiKey: key });
 
   const articlesText = articles
     .map(
@@ -123,11 +135,17 @@ export async function analyzeTopicArticles(
 
 "perspective" should reflect whether the article generally supports, opposes, or neutrally covers the topic.
 
+Follow these rules strictly:
+- Use neutral, non-judgmental language for all stance labels and summaries.
+- Do not frame any perspective as more legitimate or reasonable than another.
+- Apply the same depth of analysis to articles from all political orientations.
+- Avoid asymmetric labeling (e.g., don't use "Pro-freedom" for one side and "Anti-safety" for the other — use parallel framing like "Pro-deregulation" and "Pro-regulation").
+
 Articles:
 ${articlesText}`;
 
   try {
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await client.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       model: "llama-3.3-70b-versatile",
       temperature: 0.3,

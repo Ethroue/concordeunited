@@ -5,7 +5,7 @@ import { analyzeTopicArticles } from "@/lib/groq";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic } = body;
+    const { topic, apiKey } = body;
 
     if (!topic || typeof topic !== "string" || topic.trim().length === 0) {
       return NextResponse.json(
@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Search for articles on the topic
     const rawArticles = await searchArticlesByTopic(topic.trim(), 10);
 
     if (rawArticles.length === 0) {
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Analyze each article's stance with Groq
     const stancedArticles = await analyzeTopicArticles(
       topic,
       rawArticles.map((a) => ({
@@ -32,10 +30,10 @@ export async function POST(request: NextRequest) {
         source: a.source,
         description: a.description,
         url: a.url,
-      }))
+      })),
+      apiKey
     );
 
-    // Merge publishedAt from raw articles into the stanced results
     const articles = stancedArticles.map((stanced) => {
       const raw = rawArticles.find((r) => r.url === stanced.url);
       return {

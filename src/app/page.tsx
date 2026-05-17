@@ -33,6 +33,7 @@ export default function Home() {
   const [articleResult, setArticleResult] = useState<ArticleResultData | null>(null);
   const [topicResult, setTopicResult] = useState<TopicResultData | null>(null);
   const [dark, setDark] = useState(false);
+  const [userApiKey, setUserApiKey] = useState("");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -66,6 +67,7 @@ export default function Home() {
           body: JSON.stringify({
             url: articleUrl || undefined,
             text: articleText || undefined,
+            apiKey: userApiKey || undefined,
           }),
         });
         const data = await res.json();
@@ -75,7 +77,10 @@ export default function Home() {
         const res = await fetch("/api/topic-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic: topicQuery.trim() }),
+          body: JSON.stringify({
+            topic: topicQuery.trim(),
+            apiKey: userApiKey || undefined,
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Topic search failed.");
@@ -100,7 +105,10 @@ export default function Home() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({
+          url,
+          apiKey: userApiKey || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Analysis failed.");
@@ -146,6 +154,35 @@ export default function Home() {
 
       {/* Input Area */}
       <div className="max-w-2xl mx-auto px-6 pb-10">
+        {/* API Key Input */}
+        <div className="mb-4">
+          <details className="text-left">
+            <summary className="text-xs text-slate-400 dark:text-slate-500 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              ⚙️ Use your own Groq API key (optional)
+            </summary>
+            <div className="mt-2">
+              <input
+                type="password"
+                placeholder="Paste your Groq API key here..."
+                value={userApiKey}
+                onChange={(e) => setUserApiKey(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all text-sm"
+              />
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Get a free key at{" "}
+                <a
+                  href="https://console.groq.com/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  console.groq.com/keys
+                </a>
+              </p>
+            </div>
+          </details>
+        </div>
+
         {/* Mode Toggle */}
         <div className="flex justify-center mb-4">
           <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
@@ -213,6 +250,11 @@ export default function Home() {
             {error}
           </div>
         )}
+
+        {/* AI Disclaimer */}
+        <p className="mt-4 text-xs text-slate-400 dark:text-slate-500 text-center">
+          Analysis is AI-generated and may reflect model biases. Use as a thinking tool, not a definitive source.
+        </p>
       </div>
 
       {/* Skeleton Loading State */}
@@ -276,7 +318,7 @@ export default function Home() {
             Concorde United — Understanding is the antidote to polarization.
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            Powered by Groq &amp; NewsAPI
+            Built for hackathon by Concorde United &bull; Powered by Groq &amp; NewsAPI
           </p>
         </div>
       </footer>
