@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchArticlesByTopic } from "@/lib/newsapi";
-import { analyzeTopicArticles } from "@/lib/claude";
+import { analyzeTopicArticles } from "@/lib/gemini";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Analyze each article's stance with Claude
+    // Analyze each article's stance with Gemini
     const stancedArticles = await analyzeTopicArticles(
       topic,
       rawArticles.map((a) => ({
