@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 interface AnalysisResult {
   detectedStance: {
@@ -41,11 +41,9 @@ interface StancedArticle {
 }
 
 export async function analyzeArticle(articleText: string): Promise<AnalysisResult> {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY environment variable is not set.");
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY environment variable is not set.");
   }
-
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `You are a nonpartisan media analysis AI. Analyze the following article text and return a JSON object with this exact structure (no markdown, no code fences, just raw JSON):
 
@@ -79,10 +77,14 @@ Article text:
 ${articleText.slice(0, 15000)}`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.3,
+      max_tokens: 4000,
+    });
 
+    const text = chatCompletion.choices[0]?.message?.content || "";
     const cleanedText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed: AnalysisResult = JSON.parse(cleanedText);
     return parsed;
@@ -97,11 +99,9 @@ export async function analyzeTopicArticles(
   topic: string,
   articles: TopicArticleInput[]
 ): Promise<StancedArticle[]> {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY environment variable is not set.");
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY environment variable is not set.");
   }
-
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const articlesText = articles
     .map(
@@ -127,10 +127,14 @@ Articles:
 ${articlesText}`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.3,
+      max_tokens: 4000,
+    });
 
+    const text = chatCompletion.choices[0]?.message?.content || "";
     const cleanedText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed: StancedArticle[] = JSON.parse(cleanedText);
     return parsed;
