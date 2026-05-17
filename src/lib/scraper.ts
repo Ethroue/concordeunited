@@ -141,3 +141,58 @@ export async function scrapeArticle(
 
   return { title, text, source };
 }
+
+export async function scrapeSocialPost(url: string): Promise<{ title: string; source: string; text: string }> {
+  let source = "Social Media";
+
+  if (/twitter\.com|x\.com/.test(url)) source = "X (Twitter)";
+  else if (/instagram\.com/.test(url)) source = "Instagram";
+  else if (/facebook\.com/.test(url)) source = "Facebook";
+  else if (/threads\.net/.test(url)) source = "Threads";
+  else if (/reddit\.com/.test(url)) source = "Reddit";
+  else if (/tiktok\.com/.test(url)) source = "TikTok";
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      timeout: 10000,
+    });
+
+    const $ = cheerio.load(response.data);
+
+    // Remove scripts and styles
+    $("script, style, nav, footer, header").remove();
+
+    // Try common meta tags for social content
+    const ogDescription = $('meta[property="og:description"]').attr("content") || "";
+    const ogTitle = $('meta[property="og:title"]').attr("content") || "";
+    const twitterDescription = $('meta[name="twitter:description"]').attr("content") || "";
+    const title = ogTitle || $("title").text().trim() || "Social Media Post";
+
+    // Get page text as fallback
+    const bodyText = $("article, main, [role='main'], .post, .content, p")
+      .text()
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const text = ogDescription || twitterDescription || bodyText;
+
+    if (!text || text.length < 20) {
+      throw new Error(
+        `Could not extract enough text from ${source}. Social media posts are often loaded dynamically. Try copying and pasting the post text directly.`
+      );
+    }
+
+    return { title, source, text: text.slice(0, 15000) };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Could not extract")) {
+      throw error;
+    }
+    throw new Error(
+      `Failed to scrape ${source} post. Most social media blocks automated access. Please copy and paste the post text directly.`
+    );
+  }
+}
+

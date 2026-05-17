@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { scrapeArticle } from "@/lib/scraper";
+import { scrapeArticle, scrapeSocialPost } from "@/lib/scraper";
+import { getYouTubeTranscript, isYouTubeUrl, isSocialMediaUrl } from "@/lib/youtube";
 import { analyzeArticle } from "@/lib/groq";
 import { findRelatedArticles } from "@/lib/newsapi";
 
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     if (!url && !text) {
       return NextResponse.json(
-        { error: "Please provide either a URL or article text." },
+        { error: "Please provide a URL, article text, or social media post." },
         { status: 400 }
       );
     }
@@ -20,13 +21,28 @@ export async function POST(request: NextRequest) {
     let articleSource: string;
 
     if (url) {
-      const scraped = await scrapeArticle(url);
-      articleText = scraped.text;
-      articleTitle = scraped.title;
-      articleSource = scraped.source;
+      if (isYouTubeUrl(url)) {
+        // YouTube video — extract transcript
+        const yt = await getYouTubeTranscript(url);
+        articleText = yt.text;
+        articleTitle = yt.title;
+        articleSource = yt.source;
+      } else if (isSocialMediaUrl(url)) {
+        // Social media post — scrape content
+        const social = await scrapeSocialPost(url);
+        articleText = social.text;
+        articleTitle = social.title;
+        articleSource = social.source;
+      } else {
+        // Regular article
+        const scraped = await scrapeArticle(url);
+        articleText = scraped.text;
+        articleTitle = scraped.title;
+        articleSource = scraped.source;
+      }
     } else {
       articleText = text;
-      articleTitle = "Pasted Article";
+      articleTitle = "Pasted Content";
       articleSource = "User Input";
     }
 

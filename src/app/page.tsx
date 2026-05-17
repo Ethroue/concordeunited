@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { AnalysisResult, RelatedArticle, TopicArticle } from "@/types";
 import StanceCard from "@/components/StanceCard";
 import PerspectivePanel from "@/components/PerspectivePanel";
@@ -34,6 +34,8 @@ export default function Home() {
   const [topicResult, setTopicResult] = useState<TopicResultData | null>(null);
   const [dark, setDark] = useState(false);
   const [userApiKey, setUserApiKey] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -43,6 +45,16 @@ export default function Home() {
       root.classList.remove("dark");
     }
   }, [dark]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleAnalyze = async () => {
     if (mode === "article" && !articleUrl && !articleText) {
@@ -130,43 +142,48 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
-      {/* Dark Mode Toggle */}
-      <button
-        onClick={() => setDark(!dark)}
-        className="fixed top-4 right-4 z-50 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
-        aria-label="Toggle dark mode"
-      >
-        {dark ? "☀️" : "🌙"}
-      </button>
+      {/* Settings Gear */}
+      <div ref={settingsRef} className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setSettingsOpen(!settingsOpen)}
+          className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors shadow-sm"
+          aria-label="Settings"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
 
-      {/* Hero */}
-      <section className="pt-16 pb-10">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
-            Concorde United
-          </h1>
-          <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10">
-            We don&apos;t tell you what to think — we show you how each side
-            thinks, and why.
-          </p>
-        </div>
-      </section>
+        {settingsOpen && (
+          <div className="absolute top-12 right-0 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-4 space-y-4">
+            {/* Dark Mode Toggle */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-700 dark:text-slate-300">Dark mode</span>
+              <button
+                onClick={() => setDark(!dark)}
+                className={`relative w-11 h-6 rounded-full transition-colors ${dark ? "bg-slate-600" : "bg-slate-300"}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${dark ? "translate-x-5" : "translate-x-0"}`}
+                />
+              </button>
+            </div>
 
-      {/* Input Area */}
-      <div className="max-w-2xl mx-auto px-6 pb-10">
-        {/* API Key Input */}
-        <div className="mb-4">
-          <details className="text-left">
-            <summary className="text-xs text-slate-400 dark:text-slate-500 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-              ⚙️ Use your own Groq API key (optional)
-            </summary>
-            <div className="mt-2">
+            {/* Divider */}
+            <div className="border-t border-slate-200 dark:border-slate-700" />
+
+            {/* API Key */}
+            <div>
+              <label className="text-sm text-slate-700 dark:text-slate-300 block mb-2">
+                Groq API key (optional)
+              </label>
               <input
                 type="password"
-                placeholder="Paste your Groq API key here..."
+                placeholder="Paste your key..."
                 value={userApiKey}
                 onChange={(e) => setUserApiKey(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all text-sm"
               />
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                 Get a free key at{" "}
@@ -180,9 +197,24 @@ export default function Home() {
                 </a>
               </p>
             </div>
-          </details>
-        </div>
+          </div>
+        )}
+      </div>
 
+      {/* Hero */}
+      <section className="pt-16 pb-10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h1 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
+            Concorde United
+          </h1>
+          <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10">
+            Understanding is the antidote to polarization.
+          </p>
+        </div>
+      </section>
+
+      {/* Input Area */}
+      <div className="max-w-2xl mx-auto px-6 pb-10">
         {/* Mode Toggle */}
         <div className="flex justify-center mb-4">
           <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
@@ -206,7 +238,7 @@ export default function Home() {
           <div className="space-y-3">
             <input
               type="url"
-              placeholder="Paste an article URL..."
+              placeholder="Paste a URL (i.e., article, YouTube video, or social media post)..."
               value={articleUrl}
               onChange={(e) => setArticleUrl(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all"
@@ -218,7 +250,7 @@ export default function Home() {
                 </span>
               </div>
               <textarea
-                placeholder="Paste the full article text here..."
+                placeholder="Paste the full text here..."
                 value={articleText}
                 onChange={(e) => setArticleText(e.target.value)}
                 rows={5}
@@ -250,11 +282,6 @@ export default function Home() {
             {error}
           </div>
         )}
-
-        {/* AI Disclaimer */}
-        <p className="mt-4 text-xs text-slate-400 dark:text-slate-500 text-center">
-          Analysis is AI-generated and may reflect model biases. Use as a thinking tool, not a definitive source.
-        </p>
       </div>
 
       {/* Skeleton Loading State */}
@@ -317,8 +344,11 @@ export default function Home() {
           <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
             Concorde United — Understanding is the antidote to polarization.
           </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+            Analysis is AI-generated and may reflect model biases. Use as a thinking tool, not a definitive source.
+          </p>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            Built for hackathon by Concorde United &bull; Powered by Groq &amp; NewsAPI
+            Powered by Groq &amp; NewsAPI
           </p>
         </div>
       </footer>
