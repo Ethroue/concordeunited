@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchArticlesByTopic } from "@/lib/newsapi";
-import { analyzeTopicArticles } from "@/lib/gemini";
+import { analyzeTopicArticles } from "@/lib/groq";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Analyze each article's stance with Gemini
+    // Analyze each article's stance with Groq
     const stancedArticles = await analyzeTopicArticles(
       topic,
       rawArticles.map((a) => ({

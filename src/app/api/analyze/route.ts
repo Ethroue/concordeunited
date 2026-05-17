@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scrapeArticle } from "@/lib/scraper";
-import { analyzeArticle } from "@/lib/gemini";
+import { analyzeArticle } from "@/lib/grok";
 import { findRelatedArticles } from "@/lib/newsapi";
 
 export async function POST(request: NextRequest) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       articleSource = "User Input";
     }
 
-    // Analyze the article with Gemini
+    // Analyze the article with Grok
     const analysis = await analyzeArticle(articleText);
 
     // Extract keywords from the detected stance and reasoning for related article search
