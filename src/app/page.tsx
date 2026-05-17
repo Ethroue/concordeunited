@@ -101,6 +101,14 @@ export default function Home() {
     }
   };
 
+  const originalPerspective = articleResult
+    ? {
+        label: articleResult.analysis.detectedStance.label,
+        logicChain: articleResult.analysis.reasoningBreakdown.logicChain,
+        values: articleResult.analysis.reasoningBreakdown.values,
+      }
+    : { label: "", logicChain: "", values: [] as string[] };
+
   return (
     <main className="min-h-screen bg-white text-slate-800">
       {/* Hero Section */}
@@ -229,11 +237,7 @@ export default function Home() {
           <StanceCard stance={articleResult.analysis.detectedStance} />
 
           <PerspectivePanel
-            original=
-              label: articleResult.analysis.detectedStance.label,
-              logicChain: articleResult.analysis.reasoningBreakdown.logicChain,
-              values: articleResult.analysis.reasoningBreakdown.values,
-            
+            original={originalPerspective}
             alternatives={articleResult.analysis.alternativePerspectives}
             reasoning={articleResult.analysis.reasoningBreakdown}
           />

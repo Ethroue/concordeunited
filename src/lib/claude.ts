@@ -1,39 +1,37 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// Types
-export interface DetectedStance {
-  label: string;
-  confidence: number;
-  summary: string;
-}
-
-export interface ReasoningBreakdown {
-  values: string[];
-  evidenceEmphasized: string[];
-  evidenceOmitted: string[];
-  assumptions: string[];
-  logicChain: string;
-}
-
-export interface AlternativePerspective {
-  label: string;
-  summary: string;
-  values: string[];
-  logicChain: string;
-}
-
-export interface AnalysisResult {
-  detectedStance: DetectedStance;
-  reasoningBreakdown: ReasoningBreakdown;
-  alternativePerspectives: AlternativePerspective[];
+interface AnalysisResult {
+  detectedStance: {
+    label: string;
+    confidence: number;
+    summary: string;
+  };
+  reasoningBreakdown: {
+    values: string[];
+    evidenceEmphasized: string[];
+    evidenceOmitted: string[];
+    assumptions: string[];
+    logicChain: string;
+  };
+  alternativePerspectives: Array<{
+    label: string;
+    summary: string;
+    values: string[];
+    logicChain: string;
+  }>;
   commonGround: string[];
 }
 
-export interface TopicArticleAnalysis {
+interface TopicArticleInput {
+  title: string;
+  source: string;
+  description: string;
+  url: string;
+}
+
+interface StancedArticle {
   title: string;
   source: string;
   url: string;
@@ -42,91 +40,101 @@ export interface TopicArticleAnalysis {
   perspective: "supporting" | "opposing" | "neutral";
 }
 
-// Analyze a single article
 export async function analyzeArticle(articleText: string): Promise<AnalysisResult> {
-  try {
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system: `You are a nonpartisan political analyst. Given a news article, you must:
-1. Identify the political stance/framing (e.g., progressive, conservative, libertarian, centrist, populist). Provide a one-word label and a confidence percentage.
-2. Explain the reasoning chain: what values, priorities, and assumptions lead to this framing. What evidence does the article emphasize? What does it omit?
-3. Generate 2-3 alternative perspective analyses — steelmanned, fair representations of how other political viewpoints would interpret the same event. For each, explain the values and logic that drive that interpretation.
-4. Identify common ground: 2-3 points where most perspectives agree on facts or shared values.
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY environment variable is not set.");
+  }
 
-Return your analysis as a JSON object with this exact shape:
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  const prompt = `You are a nonpartisan media analysis AI. Analyze the following article text and return a JSON object with this exact structure (no markdown, no code fences, just raw JSON):
+
 {
-  "detectedStance": { "label": string, "confidence": number, "summary": string },
-  "reasoningBreakdown": { "values": string[], "evidenceEmphasized": string[], "evidenceOmitted": string[], "assumptions": string[], "logicChain": string },
-  "alternativePerspectives": [{ "label": string, "summary": string, "values": string[], "logicChain": string }],
-  "commonGround": string[]
+  "detectedStance": {
+    "label": "string - the political/ideological stance detected (e.g., 'Center-Left', 'Conservative', 'Libertarian', 'Progressive', etc.)",
+    "confidence": number between 0 and 100,
+    "summary": "string - 2-3 sentence summary of the article's position"
+  },
+  "reasoningBreakdown": {
+    "values": ["list of core values/priorities the article emphasizes"],
+    "evidenceEmphasized": ["list of evidence/facts the article highlights"],
+    "evidenceOmitted": ["list of relevant evidence/facts the article does not mention"],
+    "assumptions": ["list of underlying assumptions in the article's argument"],
+    "logicChain": "string - describe the logical flow: premise -> reasoning -> conclusion"
+  },
+  "alternativePerspectives": [
+    {
+      "label": "string - name of an alternative political/ideological perspective",
+      "summary": "string - how this perspective would view the same topic",
+      "values": ["list of values this perspective prioritizes"],
+      "logicChain": "string - how this perspective's logic differs"
+    }
+  ],
+  "commonGround": ["list of points that most perspectives would agree on"]
 }
 
-Return ONLY the JSON object, no other text.`,
-      messages: [
-        {
-          role: "user",
-          content: `Analyze the following news article:\n\n${articleText}`,
-        },
-      ],
-    });
+Provide 2-3 alternative perspectives. Be fair and balanced. Do not favor any political side.
 
-    const responseText =
-      message.content[0].type === "text" ? message.content[0].text : "";
+Article text:
+${articleText.slice(0, 15000)}`;
 
-    // Extract JSON from the response (handle markdown code blocks)
-    const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    const jsonString = jsonMatch ? jsonMatch[1].trim() : responseText.trim();
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
 
-    const result: AnalysisResult = JSON.parse(jsonString);
-    return result;
+    const cleanedText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed: AnalysisResult = JSON.parse(cleanedText);
+    return parsed;
   } catch (error) {
-    console.error("Error analyzing article:", error);
     throw new Error(
       `Failed to analyze article: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
 
-// Analyze multiple articles for a topic
 export async function analyzeTopicArticles(
   topic: string,
-  articles: { title: string; source: string; description: string; url: string }[]
-): Promise<TopicArticleAnalysis[]> {
+  articles: TopicArticleInput[]
+): Promise<StancedArticle[]> {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY environment variable is not set.");
+  }
+
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  const articlesText = articles
+    .map(
+      (a, i) =>
+        `${i + 1}. Title: "${a.title}" | Source: ${a.source} | Description: "${a.description}" | URL: ${a.url}`
+    )
+    .join("\n");
+
+  const prompt = `You are a nonpartisan media analysis AI. Given the topic "${topic}" and the following articles, classify each article's stance. Return a JSON array (no markdown, no code fences, just raw JSON) where each element has:
+
+{
+  "title": "string - article title",
+  "source": "string - source name",
+  "url": "string - article URL",
+  "stanceLabel": "string - short stance label (e.g., 'Pro-Reform', 'Anti-Regulation', 'Neutral Coverage')",
+  "stanceSummary": "string - 1-2 sentence summary of the article's angle",
+  "perspective": "supporting" | "opposing" | "neutral"
+}
+
+"perspective" should reflect whether the article generally supports, opposes, or neutrally covers the topic.
+
+Articles:
+${articlesText}`;
+
   try {
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system: `You are a nonpartisan political analyst. Given a topic and a list of news articles (with title, source, and description), analyze each article's likely political stance based on the information provided.
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
 
-For each article, return a JSON object with:
-- "title": the article title
-- "source": the article source
-- "url": the article URL
-- "stanceLabel": a one-word political stance label (e.g., progressive, conservative, libertarian, centrist, populist)
-- "stanceSummary": a brief 1-2 sentence summary of the article's likely framing/angle
-- "perspective": one of "supporting", "opposing", or "neutral" relative to the topic
-
-Return ONLY a JSON array of these objects, no other text.`,
-      messages: [
-        {
-          role: "user",
-          content: `Topic: "${topic}"\n\nArticles:\n${JSON.stringify(articles, null, 2)}`,
-        },
-      ],
-    });
-
-    const responseText =
-      message.content[0].type === "text" ? message.content[0].text : "";
-
-    // Extract JSON from the response (handle markdown code blocks)
-    const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    const jsonString = jsonMatch ? jsonMatch[1].trim() : responseText.trim();
-
-    const result: TopicArticleAnalysis[] = JSON.parse(jsonString);
-    return result;
+    const cleanedText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed: StancedArticle[] = JSON.parse(cleanedText);
+    return parsed;
   } catch (error) {
-    console.error("Error analyzing topic articles:", error);
     throw new Error(
       `Failed to analyze topic articles: ${error instanceof Error ? error.message : "Unknown error"}`
     );
