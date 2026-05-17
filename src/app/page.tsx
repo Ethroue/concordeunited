@@ -222,3 +222,47 @@ export default function Home() {
               {articleResult.articleTitle}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
+              Source: {articleResult.articleSource}
+            </p>
+          </div>
+
+          <StanceCard stance={articleResult.analysis.detectedStance} />
+
+          <PerspectivePanel
+            original=
+              label: articleResult.analysis.detectedStance.label,
+              logicChain: articleResult.analysis.reasoningBreakdown.logicChain,
+              values: articleResult.analysis.reasoningBreakdown.values,
+            
+            alternatives={articleResult.analysis.alternativePerspectives}
+            reasoning={articleResult.analysis.reasoningBreakdown}
+          />
+
+          <CommonGround points={articleResult.analysis.commonGround} />
+
+          {articleResult.relatedArticles.length > 0 && (
+            <RelatedArticles articles={articleResult.relatedArticles} />
+          )}
+        </section>
+      )}
+
+      {/* Topic Results */}
+      {topicResult && !loading && (
+        <section className="max-w-4xl mx-auto px-6 pb-16">
+          <TopicResults
+            topic={topicResult.topic}
+            articles={topicResult.articles}
+            onSelectArticle={handleTopicArticleSelect}
+          />
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
+        <p>
+          Depolarize — Understanding is the antidote to polarization.
+        </p>
+      </footer>
+    </main>
+  );
+}
