@@ -22,12 +22,14 @@ interface NewsAPIResponse {
 
 export async function searchArticlesByTopic(
   topic: string,
-  pageSize: number = 10
+  pageSize: number = 10,
+  userApiKey?: string
 ): Promise<NewsArticle[]> {
-  const apiKey = process.env.NEWS_API_KEY;
-
+  const apiKey = userApiKey || process.env.NEWS_API_KEY;
   if (!apiKey) {
-    throw new Error("NEWS_API_KEY environment variable is not set.");
+    throw new Error(
+      "Please enter your NewsAPI key in the 📰 News field (top left). Get a free key at newsapi.org/register"
+    );
   }
 
   try {
@@ -62,7 +64,9 @@ export async function searchArticlesByTopic(
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
       if (status === 401) {
-        throw new Error("Invalid NEWS_API_KEY. Check your API key.");
+        throw new Error(
+          "Invalid NewsAPI key. Please check your key in the 📰 News field (top left)."
+        );
       } else if (status === 429) {
         throw new Error("NewsAPI rate limit exceeded. Try again later.");
       }
@@ -76,12 +80,14 @@ export async function searchArticlesByTopic(
 
 export async function findRelatedArticles(
   keywords: string,
-  excludeUrl?: string
+  excludeUrl?: string,
+  userApiKey?: string
 ): Promise<NewsArticle[]> {
-  const apiKey = process.env.NEWS_API_KEY;
-
+  const apiKey = userApiKey || process.env.NEWS_API_KEY;
   if (!apiKey) {
-    throw new Error("NEWS_API_KEY environment variable is not set.");
+    throw new Error(
+      "Please enter your NewsAPI key in the 📰 News field (top left). Get a free key at newsapi.org/register"
+    );
   }
 
   try {
@@ -123,7 +129,9 @@ export async function findRelatedArticles(
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
       if (status === 401) {
-        throw new Error("Invalid NEWS_API_KEY. Check your API key.");
+        throw new Error(
+          "Invalid NewsAPI key. Please check your key in the 📰 News field (top left)."
+        );
       } else if (status === 429) {
         throw new Error("NewsAPI rate limit exceeded. Try again later.");
       }

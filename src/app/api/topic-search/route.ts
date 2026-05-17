@@ -5,7 +5,7 @@ import { analyzeTopicArticles } from "@/lib/groq";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic, apiKey } = body;
+    const { topic, apiKey, newsApiKey } = body;
 
     if (!topic || typeof topic !== "string" || topic.trim().length === 0) {
       return NextResponse.json(
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const rawArticles = await searchArticlesByTopic(topic.trim(), 10);
+    const rawArticles = await searchArticlesByTopic(topic.trim(), 10, newsApiKey);
 
     if (rawArticles.length === 0) {
       return NextResponse.json(

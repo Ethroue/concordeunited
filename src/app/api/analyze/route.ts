@@ -1,17 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import { scrapeArticle, scrapeSocialPost } from "@/lib/scraper";
-import { getYouTubeTranscript, isYouTubeUrl, isSocialMediaUrl } from "@/lib/youtube";
+import { scrapeArticle } from "@/lib/scraper";
+import { getYouTubeTranscript, isYouTubeUrl } from "@/lib/youtube";
 import { analyzeArticle } from "@/lib/groq";
 import { findRelatedArticles } from "@/lib/newsapi";
+
+const SOCIAL_DOMAINS: Record<string, string> = {
+  "twitter.com": "X (Twitter)",
+  "x.com": "X (Twitter)",
+  "instagram.com": "Instagram",
+  "facebook.com": "Facebook",
+  "threads.net": "Threads",
+  "reddit.com": "Reddit",
+  "tiktok.com": "TikTok",
+  "truthsocial.com": "Truth Social",
+  "mastodon.social": "Mastodon",
+  "bsky.app": "Bluesky",
+  "linkedin.com": "LinkedIn",
+};
+
+function detectSocialPlatform(url: string): string | null {
+  try {
+    const hostname = new URL(url).hostname.replace("www.", "");
+    for (const [domain, name] of Object.entries(SOCIAL_DOMAINS)) {
+      if (hostname === domain || hostname.endsWith(`.${domain}`)) {
+        return name;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { url, text, apiKey } = body;
+    const { url, text, apiKey, newsApiKey } = body;
 
     if (!url && !text) {
       return NextResponse.json(
-        { error: "Please provide a URL, article text, or social media post." },
+        { error: "Please provide a URL or paste content to analyze." },
         { status: 400 }
       );
     }
@@ -21,20 +49,21 @@ export async function POST(request: NextRequest) {
     let articleSource: string;
 
     if (url) {
+      const socialPlatform = detectSocialPlatform(url);
+
       if (isYouTubeUrl(url)) {
-        // YouTube video — extract transcript
         const yt = await getYouTubeTranscript(url);
         articleText = yt.text;
         articleTitle = yt.title;
         articleSource = yt.source;
-      } else if (isSocialMediaUrl(url)) {
-        // Social media post — scrape content
-        const social = await scrapeSocialPost(url);
-        articleText = social.text;
-        articleTitle = social.title;
-        articleSource = social.source;
+      } else if (socialPlatform) {
+        return NextResponse.json(
+          {
+            error: `${socialPlatform} doesn't allow automated reading of posts. Please copy the post text and paste it in the text box instead.`,
+          },
+          { status: 422 }
+        );
       } else {
-        // Regular article
         const scraped = await scrapeArticle(url);
         articleText = scraped.text;
         articleTitle = scraped.title;
@@ -67,7 +96,7 @@ export async function POST(request: NextRequest) {
     }> = [];
 
     try {
-      const related = await findRelatedArticles(keywords, url);
+      const related = await findRelatedArticles(keywords, url, newsApiKey);
       relatedArticles = related.map((article) => ({
         title: article.title,
         source: article.source,

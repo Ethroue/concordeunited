@@ -36,6 +36,7 @@ export default function Home() {
   const [topicResult, setTopicResult] = useState<TopicResultData | null>(null);
   const [dark, setDark] = useState(false);
   const [userApiKey, setUserApiKey] = useState("");
+  const [newsApiKey, setNewsApiKey] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
@@ -82,6 +83,7 @@ export default function Home() {
             url: articleUrl || undefined,
             text: articleText || undefined,
             apiKey: userApiKey || undefined,
+            newsApiKey: newsApiKey || undefined,
           }),
         });
         const data = await res.json();
@@ -94,6 +96,7 @@ export default function Home() {
           body: JSON.stringify({
             topic: topicQuery.trim(),
             apiKey: userApiKey || undefined,
+            newsApiKey: newsApiKey || undefined,
           }),
         });
         const data = await res.json();
@@ -122,6 +125,7 @@ export default function Home() {
         body: JSON.stringify({
           url,
           apiKey: userApiKey || undefined,
+          newsApiKey: newsApiKey || undefined,
         }),
       });
       const data = await res.json();
@@ -175,29 +179,40 @@ export default function Home() {
         )}
       </div>
 
-      {/* API Key Input - Top Left */}
+      {/* API Key Inputs - Top Left */}
       <div className="fixed top-4 left-4 z-50">
-        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm px-3 py-1.5">
-          <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">🔑 API Key:</span>
-          <input
-            type="password"
-            placeholder="Paste Groq key..."
-            value={userApiKey}
-            onChange={(e) => setUserApiKey(e.target.value)}
-            className="w-44 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 text-xs"
-          />
-          {userApiKey && (
-            <span className="text-green-500 text-xs">✓</span>
-          )}
+        <div className="flex flex-col gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">🔑 Groq:</span>
+            <input
+              type="password"
+              placeholder="Paste Groq key..."
+              value={userApiKey}
+              onChange={(e) => setUserApiKey(e.target.value)}
+              className="w-44 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 text-xs"
+            />
+            {userApiKey && <span className="text-green-500 text-xs">✓</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">📰 News:</span>
+            <input
+              type="password"
+              placeholder="Paste NewsAPI key..."
+              value={newsApiKey}
+              onChange={(e) => setNewsApiKey(e.target.value)}
+              className="w-44 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 text-xs"
+            />
+            {newsApiKey && <span className="text-green-500 text-xs">✓</span>}
+          </div>
         </div>
-        <a
-          href="https://console.groq.com/keys"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 underline ml-1"
-        >
-          Get a free key
-        </a>
+        <div className="flex gap-3 ml-1 mt-0.5">
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 underline">
+            Get Groq key
+          </a>
+          <a href="https://newsapi.org/register" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 underline">
+            Get News key
+          </a>
+        </div>
       </div>
 
       {/* Hero */}
