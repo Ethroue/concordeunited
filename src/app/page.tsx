@@ -138,17 +138,9 @@ export default function Home() {
         {dark ? "☀️" : "🌙"}
       </button>
 
-      {/* Hero — only shows when not scrolled */}
-      <section
-        className={`transition-all duration-300 ${
-          scrolled ? "pt-2 pb-2" : "pt-16 pb-10"
-        }`}
-      >
-        <div
-          className={`max-w-4xl mx-auto px-6 text-center transition-all duration-300 ${
-            scrolled ? "opacity-0 h-0 overflow-hidden" : "opacity-100"
-          }`}
-        >
+      {/* Hero — collapses on scroll */}
+      <section className={`transition-all duration-300 ${scrolled ? "pt-2 pb-2" : "pt-16 pb-10"}`}>
+        <div className={`max-w-4xl mx-auto px-6 text-center transition-all duration-300 ${scrolled ? "opacity-0 h-0 overflow-hidden" : "opacity-100"}`}>
           <h1 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
             Concorde United
           </h1>
@@ -160,15 +152,8 @@ export default function Home() {
       </section>
 
       {/* Sticky Input Area */}
-      <div
-        className={`sticky top-0 z-40 transition-all duration-300 ${
-          scrolled
-            ? "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-sm border-b border-slate-100 dark:border-slate-800 py-3"
-            : "bg-transparent py-0"
-        }`}
-      >
+      <div className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-sm border-b border-slate-100 dark:border-slate-800 py-3" : "bg-transparent py-0"}`}>
         <div className="max-w-2xl mx-auto px-6">
-          {/* Compact title when scrolled */}
           {scrolled && (
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-2">
               Concorde United
@@ -179,28 +164,14 @@ export default function Home() {
           <div className="flex justify-center mb-4">
             <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
               <button
-                onClick={() => {
-                  setMode("article");
-                  setError(null);
-                }}
-                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
-                  mode === "article"
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
+                onClick={() => { setMode("article"); setError(null); }}
+                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${mode === "article" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
               >
                 Paste Article
               </button>
               <button
-                onClick={() => {
-                  setMode("topic");
-                  setError(null);
-                }}
-                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
-                  mode === "topic"
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
+                onClick={() => { setMode("topic"); setError(null); }}
+                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${mode === "topic" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
               >
                 Explore Topic
               </button>
@@ -209,7 +180,7 @@ export default function Home() {
 
           {/* Input Area */}
           {mode === "article" ? (
-            <div className={`space-y-3 ${scrolled ? "" : ""}`}>
+            <div className="space-y-3">
               <input
                 type="url"
                 placeholder="Paste an article URL..."
@@ -250,14 +221,9 @@ export default function Home() {
             disabled={loading}
             className="mt-3 w-full py-3 rounded-lg bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 font-medium hover:bg-slate-700 dark:hover:bg-slate-300 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all"
           >
-            {loading
-              ? "Analyzing..."
-              : mode === "article"
-                ? "Analyze Article"
-                : "Explore Topic"}
+            {loading ? "Analyzing..." : mode === "article" ? "Analyze Article" : "Explore Topic"}
           </button>
 
-          {/* Error Message */}
           {error && (
             <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
               {error}
@@ -285,11 +251,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="animate-fadeIn" style= animationDelay: "0.1s", opacity: 0 >
+          <div className="animate-fadeIn">
             <StanceCard stance={articleResult.analysis.detectedStance} />
           </div>
 
-          <div className="animate-fadeIn" style= animationDelay: "0.2s", opacity: 0 >
+          <div className="animate-fadeIn">
             <PerspectivePanel
               original={originalPerspective}
               alternatives={articleResult.analysis.alternativePerspectives}
@@ -297,12 +263,12 @@ export default function Home() {
             />
           </div>
 
-          <div className="animate-fadeIn" style= animationDelay: "0.3s", opacity: 0 >
+          <div className="animate-fadeIn">
             <CommonGround points={articleResult.analysis.commonGround} />
           </div>
 
           {articleResult.relatedArticles.length > 0 && (
-            <div className="animate-fadeIn" style= animationDelay: "0.4s", opacity: 0 >
+            <div className="animate-fadeIn">
               <RelatedArticles articles={articleResult.relatedArticles} />
             </div>
           )}
