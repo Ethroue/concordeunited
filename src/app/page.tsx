@@ -8,6 +8,8 @@ import CommonGround from "@/components/CommonGround";
 import TopicResults from "@/components/TopicResults";
 import RelatedArticles from "@/components/RelatedArticles";
 import SkeletonLoader from "@/components/SkeletonLoader";
+import PoliticalAlignments from "@/components/PoliticalAlignments";
+
 
 type Mode = "article" | "topic";
 
@@ -169,36 +171,33 @@ export default function Home() {
                 />
               </button>
             </div>
-
-            {/* Divider */}
-            <div className="border-t border-slate-200 dark:border-slate-700" />
-
-            {/* API Key */}
-            <div>
-              <label className="text-sm text-slate-700 dark:text-slate-300 block mb-2">
-                Groq API key (optional)
-              </label>
-              <input
-                type="password"
-                placeholder="Paste your key..."
-                value={userApiKey}
-                onChange={(e) => setUserApiKey(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all text-sm"
-              />
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                Get a free key at{" "}
-                <a
-                  href="https://console.groq.com/keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-slate-600 dark:hover:text-slate-300"
-                >
-                  console.groq.com/keys
-                </a>
-              </p>
-            </div>
           </div>
         )}
+      </div>
+
+      {/* API Key Input - Top Left */}
+      <div className="fixed top-4 left-4 z-50">
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm px-3 py-1.5">
+          <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">🔑 API Key:</span>
+          <input
+            type="password"
+            placeholder="Paste Groq key..."
+            value={userApiKey}
+            onChange={(e) => setUserApiKey(e.target.value)}
+            className="w-44 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 text-xs"
+          />
+          {userApiKey && (
+            <span className="text-green-500 text-xs">✓</span>
+          )}
+        </div>
+        <a
+          href="https://console.groq.com/keys"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 underline ml-1"
+        >
+          Get a free key
+        </a>
       </div>
 
       {/* Hero */}
@@ -238,7 +237,7 @@ export default function Home() {
           <div className="space-y-3">
             <input
               type="url"
-              placeholder="Paste a URL (i.e., article, YouTube video, or social media post)..."
+              placeholder="Paste a URL (i.e., article or YouTube video)..."
               value={articleUrl}
               onChange={(e) => setArticleUrl(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all"
@@ -313,6 +312,10 @@ export default function Home() {
               alternatives={articleResult.analysis.alternativePerspectives}
               reasoning={articleResult.analysis.reasoningBreakdown}
             />
+          </div>
+
+          <div className="animate-fadeIn">
+            <PoliticalAlignments alignments={articleResult.analysis.politicalAlignments} />
           </div>
 
           <div className="animate-fadeIn">

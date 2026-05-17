@@ -20,6 +20,11 @@ interface AnalysisResult {
     logicChain: string;
   }>;
   commonGround: string[];
+  politicalAlignments: Array<{
+    party: string;
+    stance: string;
+    keyPoints: string[];
+  }>;
 }
 
 interface TopicArticleInput {
@@ -39,10 +44,10 @@ interface StancedArticle {
 }
 
 export async function analyzeArticle(articleText: string, apiKey?: string): Promise<AnalysisResult> {
-  const key = apiKey || process.env.GROQ_API_KEY;
-  if (!key) {
-    throw new Error("No API key provided. Please enter your Groq API key or set GROQ_API_KEY in .env.local.");
+  if (!apiKey) {
+  throw new Error("Please enter your Groq API key in the ⚙️ settings menu (top right) to use this app. Get a free key at console.groq.com/keys");
   }
+const key = apiKey;
 
   const client = new Groq({ apiKey: key });
 
@@ -69,10 +74,17 @@ export async function analyzeArticle(articleText: string, apiKey?: string): Prom
       "logicChain": "string - how this perspective's logic differs"
     }
   ],
-  "commonGround": ["list of points that most perspectives would agree on"]
+  "commonGround": ["list of points that most perspectives would agree on"],
+  "politicalAlignments": [
+    {
+      "party": "string - political party or ideology name (e.g., 'Republican Party', 'Democratic Party', 'Libertarian', 'Democratic Socialists', 'Green Party', etc.)",
+      "stance": "string - one sentence describing this party/ideology's position on the article's topic",
+      "keyPoints": ["list of 2-3 specific policy positions or values this party holds on this topic"]
+    }
+  ]
 }
 
-Provide 2-3 alternative perspectives. Follow these rules strictly:
+Provide 2-3 alternative perspectives. For politicalAlignments, include 3-5 major U.S. political parties or ideologies and explain how each would view the article's topic. Include both major parties and at least one third-party or independent ideology. Follow these rules strictly:
 - Be fair and balanced. Do not favor any political side.
 - Do not use loaded or pejorative language. Describe all perspectives with equal respect and nuance.
 - When labeling stances, use neutral descriptors (e.g., "Pro-regulation" not "Big government", "Traditional values" not "Regressive").
@@ -80,6 +92,7 @@ Provide 2-3 alternative perspectives. Follow these rules strictly:
 - Avoid framing any perspective as the "default" or "common sense" position.
 - When listing evidence omitted, apply equal scrutiny to all sides — do not disproportionately flag omissions from one ideology.
 - Confidence scores should reflect how clearly the article expresses a stance, not how "correct" the stance is.
+- For politicalAlignments, represent each party's ACTUAL stated positions, not caricatures. Use official platform positions when possible.
 
 Article text:
 ${articleText.slice(0, 15000)}`;
@@ -89,7 +102,7 @@ ${articleText.slice(0, 15000)}`;
       messages: [{ role: "user", content: prompt }],
       model: "llama-3.3-70b-versatile",
       temperature: 0.3,
-      max_tokens: 4000,
+      max_tokens: 5000,
     });
 
     const text = chatCompletion.choices[0]?.message?.content || "";

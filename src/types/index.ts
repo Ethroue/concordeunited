@@ -19,11 +19,18 @@ export interface AlternativePerspective {
   logicChain: string;
 }
 
+export interface PoliticalAlignment {
+  party: string;
+  stance: string;
+  keyPoints: string[];
+}
+
 export interface AnalysisResult {
   detectedStance: DetectedStance;
   reasoningBreakdown: ReasoningBreakdown;
   alternativePerspectives: AlternativePerspective[];
   commonGround: string[];
+  politicalAlignments: PoliticalAlignment[];
 }
 
 export interface RelatedArticle {
