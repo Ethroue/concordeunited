@@ -114,7 +114,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="max-w-4xl mx-auto px-6 pt-16 pb-10 text-center">
         <h1 className="text-5xl font-bold tracking-tight text-slate-900 mb-3">
-          Depolarize
+          Concorde United
         </h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-10">
           We don&apos;t tell you what to think — we show you how each side
@@ -264,7 +264,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
         <p>
-          Depolarize — Understanding is the antidote to polarization.
+          Concorde United — Understanding is the antidote to polarization.
         </p>
       </footer>
     </main>
