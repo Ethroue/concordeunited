@@ -1,23 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { AnalysisResult, RelatedArticle, TopicArticle } from "@/types";
 import StanceCard from "@/components/StanceCard";
 import PerspectivePanel from "@/components/PerspectivePanel";
 import CommonGround from "@/components/CommonGround";
 import TopicResults from "@/components/TopicResults";
 import RelatedArticles from "@/components/RelatedArticles";
+import SkeletonLoader from "@/components/SkeletonLoader";
 
 type Mode = "article" | "topic";
 
-interface ArticleResult {
+interface ArticleResultData {
   analysis: AnalysisResult;
   relatedArticles: RelatedArticle[];
   articleTitle: string;
   articleSource: string;
 }
 
-interface TopicResult {
+interface TopicResultData {
   topic: string;
   articles: TopicArticle[];
 }
@@ -29,8 +30,25 @@ export default function Home() {
   const [topicQuery, setTopicQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [articleResult, setArticleResult] = useState<ArticleResult | null>(null);
-  const [topicResult, setTopicResult] = useState<TopicResult | null>(null);
+  const [articleResult, setArticleResult] = useState<ArticleResultData | null>(null);
+  const [topicResult, setTopicResult] = useState<TopicResultData | null>(null);
+  const [dark, setDark] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (dark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [dark]);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 80);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleAnalyze = async () => {
     if (mode === "article" && !articleUrl && !articleText) {
@@ -110,74 +128,111 @@ export default function Home() {
     : { label: "", logicChain: "", values: [] as string[] };
 
   return (
-    <main className="min-h-screen bg-white text-slate-800">
-      {/* Hero Section */}
-      <section className="max-w-4xl mx-auto px-6 pt-16 pb-10 text-center">
-        <h1 className="text-5xl font-bold tracking-tight text-slate-900 mb-3">
-          Concorde United
-        </h1>
-        <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-10">
-          We don&apos;t tell you what to think — we show you how each side
-          thinks, and why.
-        </p>
+    <main className="min-h-screen bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+      {/* Dark Mode Toggle */}
+      <button
+        onClick={() => setDark(!dark)}
+        className="fixed top-4 right-4 z-50 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
+        aria-label="Toggle dark mode"
+      >
+        {dark ? "☀️" : "🌙"}
+      </button>
 
-        {/* Mode Toggle */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex rounded-lg bg-slate-100 p-1">
-            <button
-              onClick={() => {
-                setMode("article");
-                setError(null);
-              }}
-              className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
-                mode === "article"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              Paste Article
-            </button>
-            <button
-              onClick={() => {
-                setMode("topic");
-                setError(null);
-              }}
-              className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
-                mode === "topic"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              Explore Topic
-            </button>
-          </div>
+      {/* Hero — only shows when not scrolled */}
+      <section
+        className={`transition-all duration-300 ${
+          scrolled ? "pt-2 pb-2" : "pt-16 pb-10"
+        }`}
+      >
+        <div
+          className={`max-w-4xl mx-auto px-6 text-center transition-all duration-300 ${
+            scrolled ? "opacity-0 h-0 overflow-hidden" : "opacity-100"
+          }`}
+        >
+          <h1 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
+            Concorde United
+          </h1>
+          <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10">
+            We don&apos;t tell you what to think — we show you how each side
+            thinks, and why.
+          </p>
         </div>
+      </section>
 
-        {/* Input Area */}
-        <div className="max-w-2xl mx-auto">
+      {/* Sticky Input Area */}
+      <div
+        className={`sticky top-0 z-40 transition-all duration-300 ${
+          scrolled
+            ? "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-sm border-b border-slate-100 dark:border-slate-800 py-3"
+            : "bg-transparent py-0"
+        }`}
+      >
+        <div className="max-w-2xl mx-auto px-6">
+          {/* Compact title when scrolled */}
+          {scrolled && (
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-2">
+              Concorde United
+            </h2>
+          )}
+
+          {/* Mode Toggle */}
+          <div className="flex justify-center mb-4">
+            <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
+              <button
+                onClick={() => {
+                  setMode("article");
+                  setError(null);
+                }}
+                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
+                  mode === "article"
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                Paste Article
+              </button>
+              <button
+                onClick={() => {
+                  setMode("topic");
+                  setError(null);
+                }}
+                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${
+                  mode === "topic"
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                Explore Topic
+              </button>
+            </div>
+          </div>
+
+          {/* Input Area */}
           {mode === "article" ? (
-            <div className="space-y-3">
+            <div className={`space-y-3 ${scrolled ? "" : ""}`}>
               <input
                 type="url"
                 placeholder="Paste an article URL..."
                 value={articleUrl}
                 onChange={(e) => setArticleUrl(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all"
               />
-              <div className="relative">
-                <div className="absolute inset-x-0 top-0 flex justify-center -mt-3">
-                  <span className="bg-white px-3 text-xs text-slate-400 uppercase tracking-wide">
-                    or paste text
-                  </span>
+              {!scrolled && (
+                <div className="relative">
+                  <div className="absolute inset-x-0 top-0 flex justify-center -mt-3">
+                    <span className="bg-white dark:bg-slate-950 px-3 text-xs text-slate-400 uppercase tracking-wide">
+                      or paste text
+                    </span>
+                  </div>
+                  <textarea
+                    placeholder="Paste the full article text here..."
+                    value={articleText}
+                    onChange={(e) => setArticleText(e.target.value)}
+                    rows={5}
+                    className="w-full px-4 py-4 pt-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all resize-none"
+                  />
                 </div>
-                <textarea
-                  placeholder="Paste the full article text here..."
-                  value={articleText}
-                  onChange={(e) => setArticleText(e.target.value)}
-                  rows={5}
-                  className="w-full px-4 py-4 pt-5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent transition-all resize-none"
-                />
-              </div>
+              )}
             </div>
           ) : (
             <input
@@ -186,14 +241,14 @@ export default function Home() {
               value={topicQuery}
               onChange={(e) => setTopicQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all"
             />
           )}
 
           <button
             onClick={handleAnalyze}
             disabled={loading}
-            className="mt-4 w-full py-3 rounded-lg bg-slate-800 text-white font-medium hover:bg-slate-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all"
+            className="mt-3 w-full py-3 rounded-lg bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 font-medium hover:bg-slate-700 dark:hover:bg-slate-300 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all"
           >
             {loading
               ? "Analyzing..."
@@ -201,58 +256,62 @@ export default function Home() {
                 ? "Analyze Article"
                 : "Explore Topic"}
           </button>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+              {error}
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mt-4 max-w-2xl mx-auto p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-            {error}
-          </div>
-        )}
-      </section>
-
-      {/* Loading Animation */}
+      {/* Skeleton Loading State */}
       {loading && (
-        <div className="flex justify-center py-16">
-          <div className="flex space-x-2">
-            <div className="w-3 h-3 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.3s]" />
-            <div className="w-3 h-3 rounded-full bg-slate-400 animate-bounce [animation-delay:-0.15s]" />
-            <div className="w-3 h-3 rounded-full bg-slate-400 animate-bounce" />
-          </div>
+        <div className="max-w-4xl mx-auto px-6 py-12">
+          <SkeletonLoader mode={mode} />
         </div>
       )}
 
       {/* Article Results */}
       {articleResult && !loading && (
-        <section className="max-w-4xl mx-auto px-6 pb-16 space-y-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-semibold text-slate-900">
+        <section className="max-w-4xl mx-auto px-6 pb-16 space-y-8 pt-8">
+          <div className="text-center mb-6 animate-fadeIn">
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
               {articleResult.articleTitle}
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Source: {articleResult.articleSource}
             </p>
           </div>
 
-          <StanceCard stance={articleResult.analysis.detectedStance} />
+          <div className="animate-fadeIn" style= animationDelay: "0.1s", opacity: 0 >
+            <StanceCard stance={articleResult.analysis.detectedStance} />
+          </div>
 
-          <PerspectivePanel
-            original={originalPerspective}
-            alternatives={articleResult.analysis.alternativePerspectives}
-            reasoning={articleResult.analysis.reasoningBreakdown}
-          />
+          <div className="animate-fadeIn" style= animationDelay: "0.2s", opacity: 0 >
+            <PerspectivePanel
+              original={originalPerspective}
+              alternatives={articleResult.analysis.alternativePerspectives}
+              reasoning={articleResult.analysis.reasoningBreakdown}
+            />
+          </div>
 
-          <CommonGround points={articleResult.analysis.commonGround} />
+          <div className="animate-fadeIn" style= animationDelay: "0.3s", opacity: 0 >
+            <CommonGround points={articleResult.analysis.commonGround} />
+          </div>
 
           {articleResult.relatedArticles.length > 0 && (
-            <RelatedArticles articles={articleResult.relatedArticles} />
+            <div className="animate-fadeIn" style= animationDelay: "0.4s", opacity: 0 >
+              <RelatedArticles articles={articleResult.relatedArticles} />
+            </div>
           )}
         </section>
       )}
 
       {/* Topic Results */}
       {topicResult && !loading && (
-        <section className="max-w-4xl mx-auto px-6 pb-16">
+        <section className="max-w-4xl mx-auto px-6 pb-16 pt-8 animate-fadeIn">
           <TopicResults
             topic={topicResult.topic}
             articles={topicResult.articles}
@@ -262,10 +321,15 @@ export default function Home() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
-        <p>
-          Concorde United — Understanding is the antidote to polarization.
-        </p>
+      <footer className="border-t border-slate-100 dark:border-slate-800 py-10 mt-8">
+        <div className="max-w-4xl mx-auto px-6 text-center space-y-2">
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+            Concorde United — Understanding is the antidote to polarization.
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            Built for hackathon by Concorde United &bull; Powered by Groq &amp; NewsAPI
+          </p>
+        </div>
       </footer>
     </main>
   );
