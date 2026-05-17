@@ -33,7 +33,6 @@ export default function Home() {
   const [articleResult, setArticleResult] = useState<ArticleResultData | null>(null);
   const [topicResult, setTopicResult] = useState<TopicResultData | null>(null);
   const [dark, setDark] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -43,12 +42,6 @@ export default function Home() {
       root.classList.remove("dark");
     }
   }, [dark]);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 80);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const handleAnalyze = async () => {
     if (mode === "article" && !articleUrl && !articleText) {
@@ -138,9 +131,9 @@ export default function Home() {
         {dark ? "☀️" : "🌙"}
       </button>
 
-      {/* Hero — collapses on scroll */}
-      <section className={`transition-all duration-300 ${scrolled ? "pt-2 pb-2" : "pt-16 pb-10"}`}>
-        <div className={`max-w-4xl mx-auto px-6 text-center transition-all duration-300 ${scrolled ? "opacity-0 h-0 overflow-hidden" : "opacity-100"}`}>
+      {/* Hero */}
+      <section className="pt-16 pb-10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <h1 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-3">
             Concorde United
           </h1>
@@ -151,85 +144,75 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sticky Input Area */}
-      <div className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? "bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-sm border-b border-slate-100 dark:border-slate-800 py-3" : "bg-transparent py-0"}`}>
-        <div className="max-w-2xl mx-auto px-6">
-          {scrolled && (
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-2">
-              Concorde United
-            </h2>
-          )}
-
-          {/* Mode Toggle */}
-          <div className="flex justify-center mb-4">
-            <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
-              <button
-                onClick={() => { setMode("article"); setError(null); }}
-                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${mode === "article" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
-              >
-                Paste Article
-              </button>
-              <button
-                onClick={() => { setMode("topic"); setError(null); }}
-                className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${mode === "topic" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
-              >
-                Explore Topic
-              </button>
-            </div>
+      {/* Input Area */}
+      <div className="max-w-2xl mx-auto px-6 pb-10">
+        {/* Mode Toggle */}
+        <div className="flex justify-center mb-4">
+          <div className="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
+            <button
+              onClick={() => { setMode("article"); setError(null); }}
+              className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${mode === "article" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
+            >
+              Paste Article
+            </button>
+            <button
+              onClick={() => { setMode("topic"); setError(null); }}
+              className={`px-5 py-2 rounded-md text-sm font-medium transition-all ${mode === "topic" ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}
+            >
+              Explore Topic
+            </button>
           </div>
+        </div>
 
-          {/* Input Area */}
-          {mode === "article" ? (
-            <div className="space-y-3">
-              <input
-                type="url"
-                placeholder="Paste an article URL..."
-                value={articleUrl}
-                onChange={(e) => setArticleUrl(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all"
-              />
-              {!scrolled && (
-                <div className="relative">
-                  <div className="absolute inset-x-0 top-0 flex justify-center -mt-3">
-                    <span className="bg-white dark:bg-slate-950 px-3 text-xs text-slate-400 uppercase tracking-wide">
-                      or paste text
-                    </span>
-                  </div>
-                  <textarea
-                    placeholder="Paste the full article text here..."
-                    value={articleText}
-                    onChange={(e) => setArticleText(e.target.value)}
-                    rows={5}
-                    className="w-full px-4 py-4 pt-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all resize-none"
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
+        {/* Inputs */}
+        {mode === "article" ? (
+          <div className="space-y-3">
             <input
-              type="text"
-              placeholder='Search a topic (e.g., "immigration reform", "student loan forgiveness")'
-              value={topicQuery}
-              onChange={(e) => setTopicQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+              type="url"
+              placeholder="Paste an article URL..."
+              value={articleUrl}
+              onChange={(e) => setArticleUrl(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all"
             />
-          )}
-
-          <button
-            onClick={handleAnalyze}
-            disabled={loading}
-            className="mt-3 w-full py-3 rounded-lg bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 font-medium hover:bg-slate-700 dark:hover:bg-slate-300 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all"
-          >
-            {loading ? "Analyzing..." : mode === "article" ? "Analyze Article" : "Explore Topic"}
-          </button>
-
-          {error && (
-            <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
-              {error}
+            <div className="relative">
+              <div className="absolute inset-x-0 top-0 flex justify-center -mt-3">
+                <span className="bg-white dark:bg-slate-950 px-3 text-xs text-slate-400 uppercase tracking-wide">
+                  or paste text
+                </span>
+              </div>
+              <textarea
+                placeholder="Paste the full article text here..."
+                value={articleText}
+                onChange={(e) => setArticleText(e.target.value)}
+                rows={5}
+                className="w-full px-4 py-4 pt-5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all resize-none"
+              />
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <input
+            type="text"
+            placeholder='Search a topic (e.g., "immigration reform", "student loan forgiveness")'
+            value={topicQuery}
+            onChange={(e) => setTopicQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600 transition-all"
+          />
+        )}
+
+        <button
+          onClick={handleAnalyze}
+          disabled={loading}
+          className="mt-3 w-full py-3 rounded-lg bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 font-medium hover:bg-slate-700 dark:hover:bg-slate-300 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition-all"
+        >
+          {loading ? "Analyzing..." : mode === "article" ? "Analyze Article" : "Explore Topic"}
+        </button>
+
+        {error && (
+          <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Skeleton Loading State */}
@@ -293,7 +276,7 @@ export default function Home() {
             Concorde United — Understanding is the antidote to polarization.
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            Built for hackathon by Concorde United &bull; Powered by Groq &amp; NewsAPI
+            Powered by Groq &amp; NewsAPI
           </p>
         </div>
       </footer>
